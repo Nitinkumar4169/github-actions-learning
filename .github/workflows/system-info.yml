@@ -1,0 +1,31 @@
+name: System Information
+
+on:
+  push:
+
+jobs:
+  info:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - name: Who am I
+        run: whoami
+
+      - name: Current Directory
+        run: pwd
+
+      - name: Show Files
+        run: ls -la
+
+      - name: Linux Version
+        run: uname -a
+
+      - name: Disk Usage
+        run: df -h
+
+      - name: Memory Usage
+        run: free -h

@@ -1,0 +1,25 @@
+name: Matrix Demo
+
+on:
+  push:
+
+jobs:
+
+  test:
+
+    strategy:
+
+      matrix:
+
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+
+      - name: Show OS
+
+        run: echo "Running on ${{ matrix.os }}"

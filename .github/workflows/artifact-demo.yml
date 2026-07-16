@@ -1,0 +1,24 @@
+name: Artifact Demo
+
+on:
+  push:
+
+jobs:
+
+  create-file:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Create Report
+        run: |
+          echo "GitHub Actions Learning" > report.txt
+          echo "Created by Nitin" >> report.txt
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+
+        with:
+          name: my-report
+          path: report.txt

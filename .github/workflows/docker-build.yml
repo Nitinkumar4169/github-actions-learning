@@ -22,3 +22,7 @@ jobs:
 
       - name: Show Images
         run: docker images
+
+      - name: Run Docker Container
+        run: |
+          docker run --rm hello-docker:v1

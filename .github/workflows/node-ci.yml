@@ -1,0 +1,32 @@
+name: Node.js CI Pipeline
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Dependencies
+        run: |
+          cd node-app
+          npm install
+
+      - name: Run Tests
+        run: |
+          cd node-app
+          npm test
+
+      - name: Build Application
+        run: |
+          cd node-app
+          npm run build

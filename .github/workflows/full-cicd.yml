@@ -1,0 +1,110 @@
+name: Complete CI/CD Pipeline
+
+on:
+  workflow_dispatch:
+
+env:
+  APP_NAME: node-app
+
+jobs:
+
+  test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Dependencies
+        run: |
+          cd node-app
+          npm install
+
+      - name: Run Tests
+        run: |
+          cd node-app
+          npm test
+
+  build:
+
+    needs: test
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Dependencies
+        run: |
+          cd node-app
+          npm install
+
+      - name: Build Application
+        run: |
+          cd node-app
+          npm run build
+
+      - name: Create Build Output
+        run: |
+          mkdir -p node-app/dist
+          echo "<h1>Node.js Build Successful</h1>" > node-app/dist/index.html
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-build
+          path: node-app/dist
+
+  deploy:
+
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: node-build
+          path: deployment
+
+      - name: Verify Deployment Files
+        run: |
+          echo "Deployment Files:"
+          ls -R deployment
+
+      - name: Deploy Application
+        run: |
+          echo "Deploying $APP_NAME..."
+          echo "Deployment Successful"
+
+  notification:
+
+    needs: deploy
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Notify Success
+        run: |
+          echo "=================================="
+          echo "CI/CD Pipeline Completed"
+          echo "Application: $APP_NAME"
+          echo "Status: SUCCESS"
+          echo "=================================="

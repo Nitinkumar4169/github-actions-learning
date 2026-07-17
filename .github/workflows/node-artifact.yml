@@ -1,0 +1,54 @@
+name: Node Artifact Pipeline
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Dependencies
+        run: |
+          cd node-app
+          npm install
+
+      - name: Build Application
+        run: |
+          cd node-app
+          npm run build
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-build
+          path: node-app/dist
+
+  verify:
+
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: node-build
+          path: downloaded-build
+
+      - name: Show Artifact Files
+        run: |
+          ls -R downloaded-build

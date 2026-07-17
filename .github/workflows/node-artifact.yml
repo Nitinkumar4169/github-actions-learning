@@ -35,7 +35,7 @@ jobs:
           name: node-build
           path: node-app/dist
 
-  verify:
+  deploy:
 
     needs: build
 
@@ -47,8 +47,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-build
-          path: downloaded-build
+          path: deployment
 
-      - name: Show Artifact Files
+      - name: Deploy Application
         run: |
-          ls -R downloaded-build
+          echo "Starting Deployment.."
+          ls -R deployment
+          echo "Deployment Successfull"

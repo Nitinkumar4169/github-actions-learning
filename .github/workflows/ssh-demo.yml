@@ -1,0 +1,26 @@
+name: SSH Deployment Demo
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Configure SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Verify SSH Setup
+        run: |
+          ls -la ~/.ssh
+
+      - name: Show Server Details
+        run: |
+          echo "Server User: ${{ secrets.SERVER_USER }}"
+          echo "Server Host: ${{ secrets.SERVER_HOST }}"

@@ -1,7 +1,9 @@
 name: Real Deployment
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
 

@@ -1,0 +1,30 @@
+name: Docker Self Hosted Runner Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  docker-test:
+
+    runs-on: self-hosted
+
+    steps:
+
+      - name: Check Runner Machine
+        run: |
+          echo "Running on:"
+          hostname
+          whoami
+
+      - name: Check Docker Version
+        run: |
+          docker --version
+
+      - name: Check Docker Status
+        run: |
+          docker ps
+
+      - name: Run Docker Test Container
+        run: |
+          docker run hello-world

@@ -10,7 +10,7 @@ jobs:
 
   test:
 
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
 
@@ -36,7 +36,7 @@ jobs:
 
     needs: test
 
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
 
@@ -73,7 +73,7 @@ jobs:
 
     needs: build
 
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
 
@@ -97,7 +97,7 @@ jobs:
 
     needs: deploy
 
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
 

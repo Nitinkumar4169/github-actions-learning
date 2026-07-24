@@ -1,0 +1,81 @@
+name: IF Condition Demo
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  build:
+    name: Build Application
+    runs-on: self-hosted
+
+    steps:
+
+      - name: Build Step
+        run: |
+          echo "Building application..."
+          echo "Build completed successfully"
+
+
+  test:
+    name: Testing Application
+    needs: build
+    runs-on: self-hosted
+
+    steps:
+
+      - name: Run Tests
+        run: |
+          echo "Running tests..."
+          echo "Tests passed"
+
+
+  deploy:
+    name: Deploy Application
+    needs: test
+    runs-on: self-hosted
+
+    if: success()
+
+    steps:
+
+      - name: Deployment
+        run: |
+          echo "Deploying application..."
+          echo "Deployment completed"
+
+
+  failure-notification:
+    name: Failure Notification
+    needs:
+      - build
+      - test
+      - deploy
+
+    if: failure()
+
+    runs-on: self-hosted
+
+    steps:
+
+      - name: Send Failure Message
+        run: |
+          echo "Something failed in pipeline"
+
+
+  cleanup:
+    name: Cleanup
+    needs:
+      - build
+      - test
+      - deploy
+
+    if: always()
+
+    runs-on: self-hosted
+
+    steps:
+
+      - name: Cleanup Resources
+        run: |
+          echo "Cleaning temporary files..."

@@ -1,20 +1,35 @@
-name: Reusable Build Workflow
+name: Reusable Node Build
 
 on:
   workflow_call:
 
 jobs:
-
   build:
+    runs-on: self-hosted
 
-    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: node-app
 
     steps:
-
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: node-app/package-lock.json
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npm test
+
       - name: Build Application
-        run: |
-          echo "Building Application..."
-          echo "Reusable Workflow Executed Successfully"
+        run: npm run build
+
+      - name: Build Completed
+        run: echo "Reusable workflow executed successfully!"

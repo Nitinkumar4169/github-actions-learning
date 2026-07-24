@@ -1,0 +1,36 @@
+name: Concurrency Demo
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: true
+
+
+jobs:
+
+  build:
+
+    runs-on: self-hosted
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+
+      - name: Start Build
+        run: |
+          echo "Build Started"
+          sleep 60
+
+
+      - name: Finish Build
+        run: |
+          echo "Build Completed"

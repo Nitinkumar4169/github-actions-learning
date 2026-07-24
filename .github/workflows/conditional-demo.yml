@@ -1,0 +1,64 @@
+name: Conditional Demo
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  demo:
+
+    runs-on: self-hosted
+
+    steps:
+
+      # Step 1: Always runs
+      - name: Check Runner Information
+        run: |
+          echo "This step always runs"
+          echo "Hostname:"
+          hostname
+          echo "User:"
+          whoami
+
+
+      # Step 2: Runs only if previous steps are successful
+      - name: Success Condition Example
+        if: success()
+        run: |
+          echo "Previous step succeeded"
+          echo "Running success condition"
+
+
+      # Step 3: Check current branch
+      - name: Main Branch Check
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "You are running this workflow from main branch"
+
+
+      # Step 4: Failure condition example
+      - name: Failure Condition Example
+        if: failure()
+        run: |
+          echo "A previous step failed"
+
+
+      # Step 5: Always execute
+      - name: Cleanup Step
+        if: always()
+        run: |
+          echo "This step always executes"
+          echo "Workflow completed"
+
+
+      # Step 6: Check environment details
+      - name: System Information
+        run: |
+          echo "Operating System:"
+          uname -a
+
+          echo "Node Version:"
+          node -v
+
+          echo "Docker Version:"
+          docker --version

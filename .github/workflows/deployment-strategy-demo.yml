@@ -1,0 +1,57 @@
+name: Deployment Strategy Demo
+
+
+on:
+
+  workflow_dispatch:
+
+
+
+jobs:
+
+
+  deploy:
+
+
+    name: Rolling Deployment Simulation
+
+    runs-on: self-hosted
+
+
+    strategy:
+
+      matrix:
+
+        server:
+          - server-1
+          - server-2
+          - server-3
+
+
+
+    steps:
+
+
+      - name: Checkout Code
+
+        uses: actions/checkout@v4
+
+
+
+      - name: Deploy Application
+
+        run: |
+
+          echo "Deploying to ${{ matrix.server }}"
+
+          echo "Stopping old version"
+
+          sleep 5
+
+          echo "Installing new version"
+
+          sleep 5
+
+          echo "Starting application"
+
+          echo "${{ matrix.server }} deployment completed"

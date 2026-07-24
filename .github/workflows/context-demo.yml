@@ -1,0 +1,53 @@
+name: Context Demo
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  context-info:
+
+    runs-on: self-hosted
+
+    steps:
+
+      - name: Display GitHub Context Information
+        run: |
+
+          echo "Repository Name:"
+          echo "${{ github.repository }}"
+
+          echo "Repository Owner:"
+          echo "${{ github.repository_owner }}"
+
+          echo "Triggered By:"
+          echo "${{ github.actor }}"
+
+          echo "Event Name:"
+          echo "${{ github.event_name }}"
+
+          echo "Branch Reference:"
+          echo "${{ github.ref }}"
+
+          echo "Commit SHA:"
+          echo "${{ github.sha }}"
+
+
+      - name: Display Runner Information
+        run: |
+
+          echo "Runner OS:"
+          echo "${{ runner.os }}"
+
+          echo "Runner Name:"
+          echo "${{ runner.name }}"
+
+
+      - name: Display Workspace
+        run: |
+
+          echo "Workspace Location:"
+          pwd
+
+          echo "Files:"
+          ls -la

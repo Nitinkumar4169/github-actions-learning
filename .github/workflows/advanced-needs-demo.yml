@@ -1,0 +1,59 @@
+name: Advanced Needs Demo
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  build:
+    name: Build Application
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Build Project
+        run: |
+          echo "Building application..."
+          sleep 5
+          echo "Build completed."
+
+  test:
+    name: Run Tests
+    needs: build
+    runs-on: self-hosted
+
+    steps:
+      - name: Run Unit Tests
+        run: |
+          echo "Running Tests..."
+          sleep 5
+          echo "All Tests Passed."
+
+  security:
+    name: Security Scan
+    needs: build
+    runs-on: self-hosted
+
+    steps:
+      - name: Scan Code
+        run: |
+          echo "Running Security Scan..."
+          sleep 5
+          echo "No Vulnerabilities Found."
+
+  deploy:
+    name: Deploy Application
+    needs:
+      - test
+      - security
+
+    runs-on: self-hosted
+
+    steps:
+      - name: Deploy
+        run: |
+          echo "Deploying Application..."
+          sleep 5
+          echo "Deployment Successful!"

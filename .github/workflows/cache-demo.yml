@@ -1,0 +1,30 @@
+name: Cache Demo
+
+on:
+  workflow_dispatch:
+
+jobs:
+  cache-demo:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Dependencies
+        working-directory: node-app
+        run: npm install
+
+      - name: Run Tests
+        working-directory: node-app
+        run: npm test
+
+      - name: Build Application
+        working-directory: node-app
+        run: npm run build

@@ -1,0 +1,70 @@
+name: SonarQube Code Quality Scan
+
+
+on:
+
+  workflow_dispatch:
+
+  push:
+
+    branches:
+      - main
+
+
+
+jobs:
+
+
+  sonarqube:
+
+
+    name: Code Quality Analysis
+
+    runs-on: self-hosted
+
+
+
+    steps:
+
+
+      - name: Checkout Code
+
+        uses: actions/checkout@v4
+
+
+
+      - name: Setup Node.js
+
+        uses: actions/setup-node@v4
+
+        with:
+
+          node-version: 20
+
+
+
+      - name: Install Dependencies
+
+        working-directory: node-app
+
+        run: npm install
+
+
+
+      - name: Run Tests
+
+        working-directory: node-app
+
+        run: npm test
+
+
+
+      - name: SonarQube Scan
+
+        uses: SonarSource/sonarqube-scan-action@v5
+
+        env:
+
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}

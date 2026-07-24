@@ -1,0 +1,62 @@
+name: Environment Demo
+
+
+on:
+
+  workflow_dispatch:
+
+
+
+jobs:
+
+
+  deploy-dev:
+
+    name: Deploy to Development
+
+    runs-on: self-hosted
+
+
+    environment:
+
+      name: development
+
+
+    steps:
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+
+      - name: Development Deployment
+        run: |
+          echo "Deploying application to Development Environment"
+          echo "Development deployment completed"
+
+
+
+  deploy-production:
+
+
+    name: Deploy to Production
+
+    runs-on: self-hosted
+
+
+    needs: deploy-dev
+
+
+    environment:
+
+      name: production
+
+
+    steps:
+
+
+      - name: Production Deployment
+
+        run: |
+
+          echo "Deploying application to Production Environment"
+          echo "Production deployment completed"

@@ -1,0 +1,65 @@
+name: Job Outputs Demo
+
+
+on:
+
+  workflow_dispatch:
+
+
+jobs:
+
+
+  build:
+
+    runs-on: self-hosted
+
+
+    outputs:
+
+      app_version: ${{ steps.version.outputs.version }}
+
+
+    steps:
+
+
+      - name: Generate Version
+
+        id: version
+
+        run: |
+
+          VERSION="1.0.0"
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+
+      - name: Display Version
+
+        run: |
+
+          echo "Build Version:"
+          echo "${{ steps.version.outputs.version }}"
+
+
+
+  deploy:
+
+
+    runs-on: self-hosted
+
+
+    needs: build
+
+
+    steps:
+
+
+      - name: Deploy Application
+
+        run: |
+
+          echo "Deploying Application"
+
+          echo "Version received from build job:"
+
+          echo "${{ needs.build.outputs.app_version }}"

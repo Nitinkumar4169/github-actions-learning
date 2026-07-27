@@ -1,0 +1,226 @@
+name: Production CI/CD Pipeline
+
+
+on:
+
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+
+
+jobs:
+
+
+# ---------------------------
+# Stage 1 - Build and Test
+# ---------------------------
+
+  build-test:
+
+    runs-on: self-hosted
+
+
+    steps:
+
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: node-app/package-lock.json
+
+
+
+      - name: Install Dependencies
+        working-directory: node-app
+        run: npm install
+
+
+
+      - name: Run Tests
+        working-directory: node-app
+        run: npm test
+
+
+
+      - name: Build Application
+        working-directory: node-app
+        run: npm run build
+
+
+
+# ---------------------------
+# Stage 2 - Security Scan
+# ---------------------------
+
+
+  security-scan:
+
+    needs: build-test
+
+    runs-on: self-hosted
+
+
+    steps:
+
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+
+
+      - name: Run npm audit
+
+        working-directory: node-app
+
+        run: npm audit --audit-level=high
+
+
+
+
+# ---------------------------
+# Stage 3 - SonarQube
+# ---------------------------
+
+
+  code-quality:
+
+
+    needs: security-scan
+
+    runs-on: self-hosted
+
+
+    steps:
+
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+
+
+      - name: SonarQube Scan
+
+        uses: SonarSource/sonarqube-scan-action@v6
+
+        env:
+
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+
+
+
+
+# ---------------------------
+# Stage 4 - Docker Build
+# ---------------------------
+
+
+  docker-build:
+
+
+    needs: code-quality
+
+    runs-on: self-hosted
+
+
+
+    steps:
+
+
+      - name: Checkout Code
+
+        uses: actions/checkout@v4
+
+
+
+      - name: Build Docker Image
+
+        run: |
+
+          docker build \
+          -t node-app:${{ github.sha }} \
+          ./node-app
+
+
+
+
+# ---------------------------
+# Stage 5 - Deployment
+# ---------------------------
+
+
+  deploy:
+
+
+    needs: docker-build
+
+
+    runs-on: self-hosted
+
+
+
+    environment:
+
+      name: production
+
+
+
+    steps:
+
+
+      - name: Deploy Application
+
+
+        run: |
+
+          echo "Deploying Application"
+
+          docker stop node-app-container || true
+
+          docker rm node-app-container || true
+
+
+          docker run -d \
+          --name node-app-container \
+          -p 3001:3001 \
+          node-app:${{ github.sha }}
+
+
+
+# ---------------------------
+# Stage 6 - Health Check
+# ---------------------------
+
+
+  health-check:
+
+
+    needs: deploy
+
+    runs-on: self-hosted
+
+
+
+    steps:
+
+
+      - name: Application Health Check
+
+        run: |
+
+          sleep 10
+
+          curl http://localhost:3001

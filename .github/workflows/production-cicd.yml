@@ -283,13 +283,14 @@ jobs:
 
         run: |
 
-          docker run -d \
+          docker run -d --name node-app-container -p 3001:3001 node-app:latest
 
-          --name node-app-container \
 
-          -p 3001:3001 \
+     - name: Verify Deployment
 
-          node-app:latest
+       run: 
+
+         docker ps
 
 
 

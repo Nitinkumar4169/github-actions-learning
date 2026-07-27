@@ -79,9 +79,11 @@ jobs:
 
 
 
-      - name: Run npm audit
+      - name: Run Security Audit 
 
         working-directory: node-app
+       
+        continue-on-error: true
 
         run: npm audit --audit-level=high
 

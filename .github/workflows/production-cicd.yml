@@ -14,9 +14,9 @@ on:
 
 
 
-# ---------------------------
+# ==================================================
 # Stage 1 - Build and Test
-# ---------------------------
+# ==================================================
 
 
 jobs:
@@ -28,7 +28,6 @@ jobs:
     name: Build and Test Application
 
     runs-on: self-hosted
-
 
 
     defaults:
@@ -82,13 +81,13 @@ jobs:
 
       - name: Build Completed
 
-        run: echo "Application build completed successfully"
+        run: echo "Build and testing completed successfully"
 
 
 
-# ---------------------------
-# Stage 2 - Security Scan
-# ---------------------------
+# ==================================================
+# Stage 2 - Security Scan + Report
+# ==================================================
 
 
   security-scan:
@@ -136,7 +135,7 @@ jobs:
 
 
 
-      - name: Run npm Security Audit
+      - name: Run npm Audit
 
         working-directory: node-app
 
@@ -152,23 +151,21 @@ jobs:
 
         with:
 
-
           name: npm-security-report
-
 
           path: node-app/audit-report.json
 
 
 
-# ---------------------------
-# Stage 3 - SonarQube Code Quality
-# ---------------------------
+# ==================================================
+# Stage 3 - SonarQube Code Quality Analysis
+# ==================================================
 
 
   sonarqube-analysis:
 
 
-    name: SonarQube Code Quality Analysis
+    name: SonarQube Analysis
 
 
     needs: security-scan
@@ -200,15 +197,15 @@ jobs:
 
 
 
-# ---------------------------
+# ==================================================
 # Stage 4 - Docker Build
-# ---------------------------
+# ==================================================
 
 
   docker-build:
 
 
-    name: Build Docker Image
+    name: Docker Image Build
 
 
     needs: sonarqube-analysis
@@ -232,12 +229,15 @@ jobs:
 
         run: |
 
+          docker build -t node-app:latest ./node-app
 
-          docker build \
 
-          -t node-app:latest \
 
-          ./node-app
+      - name: Verify Docker Image
+
+        run: |
+
+          docker images node-app
 
 
 
@@ -247,15 +247,15 @@ jobs:
 
 
 
-# ---------------------------
+# ==================================================
 # Stage 5 - Deployment
-# ---------------------------
+# ==================================================
 
 
   deploy:
 
 
-    name: Deploy Application
+    name: Application Deployment
 
 
     needs: docker-build
@@ -269,17 +269,27 @@ jobs:
 
 
 
-      - name: Deployment Started
+      - name: Stop Existing Container
 
-        run: echo "Deployment stage started"
+        run: |
+
+          docker stop node-app-container || true
+
+          docker rm node-app-container || true
 
 
 
-      # Add your deployment commands here
+      - name: Deploy New Container
 
-      # Example:
+        run: |
 
-      # docker run -d -p 3001:3001 node-app:latest
+          docker run -d \
+
+          --name node-app-container \
+
+          -p 3001:3001 \
+
+          node-app:latest
 
 
 
@@ -289,9 +299,9 @@ jobs:
 
 
 
-# ---------------------------
+# ==================================================
 # Stage 6 - Health Check
-# ---------------------------
+# ==================================================
 
 
   health-check:
@@ -311,17 +321,14 @@ jobs:
 
 
 
-      - name: Check Application Status
+      - name: Check Running Container
 
         run: |
 
-
-          echo "Checking application health..."
-
-          # curl http://server-ip:3001
+          docker ps | grep node-app-container
 
 
 
-      - name: Health Check Completed
+      - name: Application Health Status
 
-        run: echo "Application is healthy"
+        run: echo "Application is running successfully"

@@ -1,126 +1,311 @@
 name: Blue Green Deployment
 
+
 on:
+
   workflow_dispatch:
 
+
 env:
+
   IMAGE_NAME: node-app
+
   BLUE_CONTAINER: node-app-blue
+
   GREEN_CONTAINER: node-app-green
+
   BLUE_PORT: 3001
+
   GREEN_PORT: 3002
+
+
 
 jobs:
 
-  # ==========================================
-  # Stage 1 - Build Docker Image
-  # ==========================================
+
+# ==================================================
+# Stage 1: Build Docker Image
+# ==================================================
 
   build:
+
+
     name: Build Docker Image
+
     runs-on: self-hosted
 
+
     steps:
+
+
       - name: Checkout Repository
+
         uses: actions/checkout@v4
 
-      - name: Build Docker Image
+
+
+      - name: Build Green Docker Image
+
         run: |
-          docker build -t ${IMAGE_NAME}:green ./node-app
+
+          docker build \
+          -t $IMAGE_NAME:green \
+          ./node-app
+
+
 
       - name: Verify Docker Image
-        run: |
-          docker images ${IMAGE_NAME}
 
-  # ==========================================
-  # Stage 2 - Deploy Green Environment
-  # ==========================================
+        run: |
+
+          docker images $IMAGE_NAME
+
+
+
+# ==================================================
+# Stage 2: Deploy Green Environment
+# ==================================================
 
   deploy-green:
+
+
     name: Deploy Green Environment
+
     needs: build
+
     runs-on: self-hosted
 
+
+
     steps:
+
+
       - name: Remove Existing Green Container
+
         run: |
-          docker stop ${GREEN_CONTAINER} || true
-          docker rm ${GREEN_CONTAINER} || true
+
+          docker stop $GREEN_CONTAINER || true
+
+          docker rm $GREEN_CONTAINER || true
+
+
 
       - name: Start Green Container
+
         run: |
+
           docker run -d \
-            --name ${GREEN_CONTAINER} \
-            -p ${GREEN_PORT}:3001 \
-            ${IMAGE_NAME}:green
+          --name $GREEN_CONTAINER \
+          -p $GREEN_PORT:3001 \
+          $IMAGE_NAME:green
+
+
 
       - name: Verify Green Container
-        run: |
-          docker ps
 
-  # ==========================================
-  # Stage 3 - Health Check
-  # ==========================================
+        run: |
+
+          docker ps | grep $GREEN_CONTAINER
+
+
+
+# ==================================================
+# Stage 3: Green Health Check
+# ==================================================
 
   health-check:
-    name: Health Check
+
+
+    name: Test Green Environment
+
     needs: deploy-green
+
     runs-on: self-hosted
 
+
+
     steps:
-      - name: Wait for Application
+
+
+      - name: Wait For Application Start
+
         run: |
+
           sleep 10
 
-      - name: Verify Application
-        run: |
-          curl http://localhost:${GREEN_PORT}
 
-  # ==========================================
-  # Stage 4 - Switch Traffic
-  # ==========================================
+
+      - name: Check Green Application
+
+        run: |
+
+          curl http://localhost:$GREEN_PORT
+
+
+
+      - name: Green Deployment Successful
+
+        run: |
+
+          echo "Green environment is healthy"
+
+
+
+# ==================================================
+# Stage 4: Switch Traffic
+# ==================================================
 
   switch:
-    name: Switch Traffic to Green
+
+
+    name: Switch Traffic Blue To Green
+
     needs: health-check
+
     runs-on: self-hosted
 
+
+
     steps:
+
+
       - name: Stop Blue Container
-        run: |
-          docker stop ${BLUE_CONTAINER} || true
-          docker rm ${BLUE_CONTAINER} || true
 
-      - name: Rename Green to Blue
         run: |
-          docker rename ${GREEN_CONTAINER} ${BLUE_CONTAINER}
 
-      - name: Verify Deployment
+          docker stop $BLUE_CONTAINER || true
+
+          docker rm $BLUE_CONTAINER || true
+
+
+
+      - name: Rename Green As Blue
+
         run: |
+
+          docker rename $GREEN_CONTAINER $BLUE_CONTAINER
+
+
+
+      - name: Verify New Blue Container
+
+        run: |
+
           docker ps
 
-      - name: Deployment Successful
-        run: |
-          echo "Blue-Green Deployment Completed Successfully"
 
-  # ==========================================
-  # Stage 5 - Final Verification
-  # ==========================================
 
-  verify:
-    name: Final Verification
+# ==================================================
+# Stage 5: Production Verification
+# ==================================================
+
+  production-verification:
+
+
+    name: Production Health Verification
+
     needs: switch
+
     runs-on: self-hosted
 
+
+
     steps:
-      - name: Running Containers
+
+
+      - name: Check Production Application
+
         run: |
+
+          curl http://localhost:$GREEN_PORT || curl http://localhost:$BLUE_PORT
+
+
+
+      - name: Show Running Containers
+
+        run: |
+
           docker ps
 
-      - name: Verify Application
-        run: |
-          curl http://localhost:${BLUE_PORT}
 
-      - name: Finished
+
+      - name: Deployment Completed
+
         run: |
-          echo "Application is running successfully."
+
+          echo "Production deployment successful"
+
+
+
+# ==================================================
+# Stage 6: Rollback
+# ==================================================
+
+  rollback:
+
+
+    name: Rollback Deployment
+
+    if: failure()
+
+    needs:
+
+      - production-verification
+
+
+    runs-on: self-hosted
+
+
+
+    steps:
+
+
+      - name: Remove Failed Deployment
+
+        run: |
+
+          docker stop $BLUE_CONTAINER || true
+
+          docker rm $BLUE_CONTAINER || true
+
+
+
+      - name: Rollback Message
+
+        run: |
+
+          echo "Deployment failed. Rollback executed."
+
+
+
+# ==================================================
+# Stage 7: Cleanup
+# ==================================================
+
+  cleanup:
+
+
+    name: Docker Cleanup
+
+    needs: production-verification
+
+    runs-on: self-hosted
+
+
+
+    steps:
+
+
+      - name: Remove Old Images
+
+        run: |
+
+          docker image prune -f
+
+
+
+      - name: Deployment Finished
+
+        run: |
+
+          echo "Blue Green Deployment Completed Successfully"

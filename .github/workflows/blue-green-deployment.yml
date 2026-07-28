@@ -78,17 +78,16 @@ jobs:
 
 
     steps:
-
-
-      - name: Remove Existing Green Container
+ 
+      - name: Cleanup Existing Containers 
 
         run: |
 
           docker stop $GREEN_CONTAINER || true
-
           docker rm $GREEN_CONTAINER || true
 
-
+          docker stop $BLUE_CONTAINER || true
+          docker rm $BLUE_CONTAINER || true
 
       - name: Start Green Container
 

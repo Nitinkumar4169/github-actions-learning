@@ -1,0 +1,208 @@
+name: Blue Green Deployment
+
+
+on:
+
+  workflow_dispatch:
+
+
+env:
+
+  IMAGE_NAME: node-app
+
+  BLUE_CONTAINER: node-app-blue
+
+  GREEN_CONTAINER: node-app-green
+
+  BLUE_PORT: 3001
+
+  GREEN_PORT: 3002
+
+
+
+jobs:
+
+
+# ==========================================
+# Stage 1: Build Docker Image
+# ==========================================
+
+  build:
+
+
+    name: Build Docker Image
+
+    runs-on: self-hosted
+
+
+    steps:
+
+
+      - name: Checkout Code
+
+        uses: actions/checkout@v4
+
+
+
+      - name: Build Docker Image
+
+        run: |
+
+          docker build \
+          -t $IMAGE_NAME:green \
+          ./node-app
+
+
+
+      - name: Verify Image
+
+        run: |
+
+          docker images $IMAGE_NAME
+
+
+
+
+# ==========================================
+# Stage 2: Deploy Green Environment
+# ==========================================
+
+  deploy-green:
+
+
+    name: Deploy Green Container
+
+
+    needs: build
+
+
+    runs-on: self-hosted
+
+
+
+    steps:
+
+
+      - name: Remove Existing Green Container
+
+        run: |
+
+          docker stop $GREEN_CONTAINER || true
+
+          docker rm $GREEN_CONTAINER || true
+
+
+
+
+      - name: Start Green Container
+
+
+        run: |
+
+
+          docker run -d \
+
+          --name $GREEN_CONTAINER \
+
+          -p $GREEN_PORT:3001 \
+
+          $IMAGE_NAME:green
+
+
+
+
+      - name: Check Green Container
+
+
+        run: |
+
+
+          docker ps | grep $GREEN_CONTAINER
+
+
+
+
+# ==========================================
+# Stage 3: Health Check Green
+# ==========================================
+
+
+  health-check:
+
+
+    name: Test Green Deployment
+
+
+    needs: deploy-green
+
+
+    runs-on: self-hosted
+
+
+
+    steps:
+
+
+      - name: Application Health Check
+
+
+        run: |
+
+
+          curl http://localhost:$GREEN_PORT
+
+
+
+
+# ==========================================
+# Stage 4: Switch Traffic
+# ==========================================
+
+
+  switch:
+
+
+    name: Switch Blue to Green
+
+
+    needs: health-check
+
+
+    runs-on: self-hosted
+
+
+
+    steps:
+
+
+      - name: Stop Blue Container
+
+
+        run: |
+
+
+          docker stop $BLUE_CONTAINER || true
+
+          docker rm $BLUE_CONTAINER || true
+
+
+
+
+      - name: Promote Green Container
+
+
+        run: |
+
+
+          docker rename $GREEN_CONTAINER $BLUE_CONTAINER
+
+
+
+
+      - name: Deployment Completed
+
+
+        run: |
+
+
+          echo "Blue Green Deployment Completed Successfully"

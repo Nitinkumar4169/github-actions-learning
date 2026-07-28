@@ -217,7 +217,7 @@ jobs:
 
         run: |
 
-          curl http://localhost:$GREEN_PORT || curl http://localhost:$BLUE_PORT
+          curl http://localhost:$GREEN_PORT
 
 
 

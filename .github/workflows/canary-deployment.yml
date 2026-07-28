@@ -5,11 +5,181 @@ on:
 
 env:
   IMAGE_NAME: node-app
-
   STABLE_CONTAINER: node-app
-
   CANARY_CONTAINER: node-app-canary
-
   STABLE_PORT: 3001
-
   CANARY_PORT: 3002
+
+jobs:
+
+# ==================================================
+# Stage 1 - Build Docker Image
+# ==================================================
+
+  build:
+
+    name: Build Canary Docker Image
+
+    runs-on: self-hosted
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker Image
+        run: |
+          docker build \
+            -t ${IMAGE_NAME}:canary \
+            ./node-app
+
+      - name: Verify Docker Image
+        run: |
+          docker images | grep ${IMAGE_NAME}
+
+# ==================================================
+# Stage 2 - Deploy Canary Container
+# ==================================================
+
+  deploy-canary:
+
+    name: Deploy Canary Environment
+
+    needs: build
+
+    runs-on: self-hosted
+
+    steps:
+
+      - name: Remove Existing Canary
+        run: |
+          docker stop ${CANARY_CONTAINER} || true
+          docker rm ${CANARY_CONTAINER} || true
+
+      - name: Start Canary Container
+        run: |
+          docker run -d \
+            --name ${CANARY_CONTAINER} \
+            -p ${CANARY_PORT}:3001 \
+            ${IMAGE_NAME}:canary
+
+      - name: Verify Canary Container
+        run: |
+          docker ps
+          docker ps | grep ${CANARY_CONTAINER}
+
+# ==================================================
+# Stage 3 - Canary Health Check
+# ==================================================
+
+  health-check:
+
+    name: Health Check
+
+    needs: deploy-canary
+
+    runs-on: self-hosted
+
+    steps:
+
+      - name: Wait for Application
+        run: sleep 10
+
+      - name: Verify Canary Application
+        run: |
+          curl http://localhost:${CANARY_PORT}
+
+# ==================================================
+# Stage 4 - Promote Canary
+# ==================================================
+
+  promote:
+
+    name: Promote Canary to Production
+
+    needs: health-check
+
+    runs-on: self-hosted
+
+    steps:
+
+      - name: Stop Existing Production
+        run: |
+          docker stop ${STABLE_CONTAINER} || true
+          docker rm ${STABLE_CONTAINER} || true
+
+      - name: Stop Canary
+        run: |
+          docker stop ${CANARY_CONTAINER}
+
+      - name: Rename Canary Container
+        run: |
+          docker rename ${CANARY_CONTAINER} ${STABLE_CONTAINER}
+
+      - name: Restart on Production Port
+        run: |
+          docker rm -f ${STABLE_CONTAINER} || true
+
+          docker run -d \
+            --name ${STABLE_CONTAINER} \
+            -p ${STABLE_PORT}:3001 \
+            ${IMAGE_NAME}:canary
+
+# ==================================================
+# Stage 5 - Production Verification
+# ==================================================
+
+  production-verification:
+
+    name: Production Verification
+
+    needs: promote
+
+    runs-on: self-hosted
+
+    steps:
+
+      - name: Verify Production Container
+        run: |
+          docker ps
+
+      - name: Verify Production Application
+        run: |
+          curl http://localhost:${STABLE_PORT}
+
+      - name: Deployment Success
+        run: |
+          echo "Canary deployment completed successfully."
+
+# ==================================================
+# Stage 6 - Rollback
+# ==================================================
+
+  rollback:
+
+    name: Rollback Deployment
+
+    if: failure()
+
+    needs:
+      - deploy-canary
+      - health-check
+      - promote
+      - production-verification
+
+    runs-on: self-hosted
+
+    steps:
+
+      - name: Remove Failed Canary
+        run: |
+          docker stop ${CANARY_CONTAINER} || true
+          docker rm ${CANARY_CONTAINER} || true
+
+      - name: Verify Production Container
+        run: |
+          docker ps
+
+      - name: Rollback Complete
+        run: |
+          echo "Rollback completed. Stable application is still available."

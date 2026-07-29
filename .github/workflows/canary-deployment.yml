@@ -7,8 +7,8 @@ env:
   IMAGE_NAME: node-app
   STABLE_CONTAINER: node-app
   CANARY_CONTAINER: node-app-canary
-  STABLE_PORT: 3001
-  CANARY_PORT: 3002
+  STABLE_PORT: 3004
+  CANARY_PORT: 3005
 
 jobs:
 
